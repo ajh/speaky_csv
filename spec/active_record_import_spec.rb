@@ -177,4 +177,78 @@ id
   it "should fail when all headers aren't to the left"
   it 'should ignore undefined variable columns'
   it 'should fail when variable columns not pair up correctly'
+
+  describe 'batch behavior' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field :id, :name, :author, :_destroy
+        end
+      end
+    end
+
+    let!(:book1) { Book.create! id: 1, name: 'Big Fiction', author: 'Sneed' }
+    let!(:book2) { Book.create! id: 2, name: 'Big NonFiction', author: 'Sneed' }
+    let!(:book3) { Book.create! id: 3, name: 'The Last Goodbye', author: 'Sneed' }
+
+    let(:io) do
+      StringIO.new <<-CSV
+id,name,author,_destroy
+,Natty,Sneed
+1,Big Fiction,Sneed
+2,Wee Little NonFiction,Sneed
+3,,,true
+      CSV
+    end
+
+    def expect_changes_to_be_correct
+      records = subject.each.to_a
+      aggregate_failures 'changes' do
+        expect(records.length).to eq 4
+        new_one = records.find(&:new_record?)
+        expect(new_one.attributes).to include('name' => 'Natty',
+                                              'author' => 'Sneed')
+        book1 = records.find { |b| b.id == 1 }
+        expect(book1).to_not be_changed
+
+        book2 = records.find { |b| b.id == 2 }
+        expect(book2.attributes).to include('name' => 'Wee Little NonFiction',
+                                            'author' => 'Sneed')
+        expect(book2).to be_changed
+
+        book3 = records.find { |b| b.id == 3 }
+        expect(book3).to be_marked_for_destruction
+      end
+    end
+
+    context 'when batch size is less than csv size' do
+      before do
+        stub_const 'SpeakyCsv::ActiveRecordImport::QUERY_BATCH_SIZE', 2
+      end
+
+      it 'works' do
+        expect_changes_to_be_correct
+      end
+    end
+
+    context 'when batch size is same as csv size' do
+      before do
+        stub_const 'SpeakyCsv::ActiveRecordImport::QUERY_BATCH_SIZE', 4
+      end
+
+      it 'works' do
+        expect_changes_to_be_correct
+      end
+    end
+
+    context 'when batch size is greater than as csv size' do
+      before do
+        stub_const 'SpeakyCsv::ActiveRecordImport::QUERY_BATCH_SIZE', 6
+      end
+
+      it 'works' do
+        expect_changes_to_be_correct
+      end
+    end
+  end
 end

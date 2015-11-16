@@ -1,0 +1,27 @@
+# uncomment to ignore pre-existing warnings
+# inherit_from: .rubocop_todo.yml
+
+AllCops:
+  Exclude:
+    - 'bin/**/*'
+    - 'db/**/*'
+    - 'config/**/*'
+    - 'features/**/*'
+    - 'lib/**/*'
+    - 'script/**/*'
+    - 'spec/**/*'
+    - 'vendor/**/*'
+
+  RunRailsCops: true
+
+# Allow 120 character line lengths
+LineLength:
+  Max: 120
+
+# Allow tabbed alignment of method args
+SingleSpaceBeforeFirstArg:
+  Enabled: false
+
+# Don't require top-level documenation
+Documentation:
+  Enabled: false

@@ -2,9 +2,9 @@ require 'csv'
 require 'active_record'
 
 module SpeakyCsv
-  # Imports a csv file as attribute hashes.
+  # Imports a csv file as unsaved active record instances
   class ActiveRecordImport
-    # QUERY_BATCH_SIZE=20
+    QUERY_BATCH_SIZE = 20
     TRUE_VALUES = ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES
 
     def initialize(config, attr_enumerator, klass)
@@ -18,34 +18,58 @@ module SpeakyCsv
       errors.clear
 
       Enumerator.new do |yielder|
-        # TODO: optimize queries by batching
-        @attr_enumerator.each do |attrs|
-          # TODO: What if there's no id field?
-          #@config.fields.include?(:id) || break
+        done = false
 
-          record = if attrs['id'].present?
-                     @klass.find_by_id(attrs['id'])
-                   else
-                     @klass.new
-                   end
+        while done == false
+          rows = []
 
-          if @config.fields.include?(:_destroy) &&
-             TRUE_VALUES.include?(attrs['_destroy'])
-            record.mark_for_destruction
-            yielder << record
-            next
-          end
-
-          @config.has_manys.keys.each do |name|
-            if attrs.key?(name)
-              # assume nested attributes feature is used
-              attrs["#{name}_attributes"] = attrs.delete name
+          QUERY_BATCH_SIZE.times do
+            begin
+              rows << @attr_enumerator.next
+            rescue StopIteration
+              done = true
             end
           end
 
-          record.attributes = attrs
+          ids = rows.map { |attrs| attrs['id'] }
+          records = @klass.includes(@config.has_manys.keys)
+            .where(id: ids)
+            .inject({}) { |a, e| a[e.id.to_s] = e; a }
 
-          yielder << record
+          rows.each do |attrs|
+            # TODO: What if there's no id field?
+            # @config.fields.include?(:id) || break
+
+            record = if attrs['id'].present?
+                       # TODO: what if can't find record?
+                       records[attrs['id']]
+                     else
+                       @klass.new
+                     end
+
+            if @config.fields.include?(:_destroy)
+              if TRUE_VALUES.include?(attrs['_destroy'])
+                record.mark_for_destruction
+                yielder << record
+                next
+
+              else
+                attrs.delete '_destroy'
+              end
+            end
+
+            @config.has_manys.keys.each do |name|
+              if attrs.key?(name)
+                # assume nested attributes feature is used
+                attrs["#{name}_attributes"] = attrs.delete name
+              end
+            end
+
+            # TODO: what if attrs has unknown attribute? ActiveRecord::UnknownAttributeError
+            record.attributes = attrs
+
+            yielder << record
+          end
         end
       end
     end
