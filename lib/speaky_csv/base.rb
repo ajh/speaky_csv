@@ -35,17 +35,27 @@ module SpeakyCsv
   # An instance of this class is yielded to the block passed to
   # define_csv_fields. Used to configure speaky csv.
   class Builder
-    attr_reader :fields, :has_ones, :has_manys
+    attr_reader \
+      :fields,
+      :has_manys,
+      :has_ones,
+      :output_only_fields
 
     def initialize
       @fields = []
+      @output_only_fields = []
       @has_ones = {}
       @has_manys = {}
     end
 
-    def field(*fields)
+    def field(*fields, output_only: false, required: false)
       @fields += fields.map(&:to_sym)
       @fields.uniq!
+
+      if output_only
+        @output_only_fields += fields.map(&:to_sym)
+        @output_only_fields.uniq!
+      end
     end
 
     def has_one(name, fields)

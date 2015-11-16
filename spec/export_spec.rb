@@ -12,7 +12,7 @@ describe SpeakyCsv::Export do
   end
 
   describe 'call' do
-    context 'with simple fields' do
+    context 'with fields' do
       before do
         presenter_klass.class_eval do
           define_csv_fields do |d|
@@ -33,6 +33,25 @@ describe SpeakyCsv::Export do
 name,author
 Big Fiction,Sneed
 True story,Honest Abe
+        CSV
+      end
+    end
+
+    context 'with output_only fields' do
+      before do
+        presenter_klass.class_eval do
+          define_csv_fields do |d|
+            d.field 'name', output_only: true
+          end
+        end
+      end
+
+      let(:records) { [double('book1', name: 'Big Fiction')] }
+
+      it 'should write field' do
+        expect(output).to eq <<-CSV
+name
+Big Fiction
         CSV
       end
     end

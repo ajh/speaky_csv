@@ -6,7 +6,7 @@ describe SpeakyCsv::AttrImport do
   let(:io) { StringIO.new }
   subject { presenter_klass.new.attr_importer io }
 
-  context 'with simple fields' do
+  context 'with fields' do
     before do
       presenter_klass.class_eval do
         define_csv_fields do |d|
@@ -29,6 +29,29 @@ True story,Honest Abe
         { 'name' => 'Big Fiction', 'author' => 'Sneed' },
         { 'name' => 'True story', 'author' => 'Honest Abe' }
       ])
+    end
+  end
+
+  context 'with output_only field' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field :id
+          d.field :name, output_only: true
+        end
+      end
+    end
+
+    before do
+      io.write <<-CSV
+id,name
+22,Big Fiction
+      CSV
+      io.rewind
+    end
+
+    it 'should exclude field' do
+      expect(subject.to_a).to eq([{'id' => '22'}])
     end
   end
 

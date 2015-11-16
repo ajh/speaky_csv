@@ -30,6 +30,7 @@ module SpeakyCsv
           attrs = {}
 
           row.headers.compact.each do |h|
+            next if @config.output_only_fields.include?(h.to_sym)
             attrs[h] = row.field h
           end
 

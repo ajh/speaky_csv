@@ -16,6 +16,21 @@ Or install it yourself as:
 
     $ gem install speaky_csv
 
+## Recommendations
+
+* Add `id` and `_destroy` fields for active record models
+* For associations, use `nested_attributes_for` and add `id` and
+  `_destroy` fields
+* Use optimistic locking and add `lock_version` to csv
+
+## TODO
+
+* `has_one` associations
+* required fields (make `lock_version` required for example)
+* configurable id field (key off an `external_id` for example)
+* validations
+* output only fields
+
 ## Usage
 
 TODO: Write usage instructions here
