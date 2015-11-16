@@ -8,7 +8,7 @@ describe SpeakyCsv::Export do
   subject { presenter_klass.new.exporter records.each }
 
   def output
-    subject.each.to_a.join
+    subject.to_a.join
   end
 
   describe 'call' do

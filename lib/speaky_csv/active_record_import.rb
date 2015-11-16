@@ -4,6 +4,8 @@ require 'active_record'
 module SpeakyCsv
   # Imports a csv file as unsaved active record instances
   class ActiveRecordImport
+    include Enumerable
+
     QUERY_BATCH_SIZE = 20
     TRUE_VALUES = ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES
 
@@ -16,7 +18,16 @@ module SpeakyCsv
     # yields successive
     def each
       errors.clear
+      block_given? ? enumerator.each { |a| yield a } : enumerator
+    end
 
+    def errors
+      @errors ||= ActiveModel::Errors.new(self)
+    end
+
+    private
+
+    def enumerator
       Enumerator.new do |yielder|
         done = false
 
@@ -72,10 +83,6 @@ module SpeakyCsv
           end
         end
       end
-    end
-
-    def errors
-      @errors ||= ActiveModel::Errors.new(self)
     end
   end
 end

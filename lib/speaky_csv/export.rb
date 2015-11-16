@@ -4,6 +4,8 @@ require 'active_model'
 module SpeakyCsv
   # Exports records as csv. Will write a csv to the given IO object
   class Export
+    include Enumerable
+
     def initialize(config, records_enumerator)
       @config = config
       @records_enumerator = records_enumerator
@@ -12,7 +14,16 @@ module SpeakyCsv
     # Writes csv string to io
     def each
       errors.clear
+      block_given? ? enumerator.each { |a| yield a } : enumerator
+    end
 
+    def errors
+      @errors ||= ActiveModel::Errors.new(self)
+    end
+
+    private
+
+    def enumerator
       Enumerator.new do |yielder|
         # header row
         yielder << CSV::Row.new(@config.fields, @config.fields, true).to_csv
@@ -34,10 +45,6 @@ module SpeakyCsv
           yielder << row.to_csv
         end
       end
-    end
-
-    def errors
-      @errors ||= ActiveModel::Errors.new(self)
     end
   end
 end

@@ -9,7 +9,7 @@ describe SpeakyCsv::ActiveRecordImport, :db do
 
   def record
     unless defined? @record
-      records = subject.each.to_a
+      records = subject.to_a
       expect(records.length).to be <= 1
       @record = records.first
     end
@@ -202,7 +202,7 @@ id,name,author,_destroy
     end
 
     def expect_changes_to_be_correct
-      records = subject.each.to_a
+      records = subject.to_a
       aggregate_failures 'changes' do
         expect(records.length).to eq 4
         new_one = records.find(&:new_record?)

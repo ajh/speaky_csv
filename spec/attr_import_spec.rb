@@ -25,7 +25,7 @@ True story,Honest Abe
     end
 
     it 'should return a data structure' do
-      expect(subject.each.to_a).to eq([
+      expect(subject.to_a).to eq([
         { 'name' => 'Big Fiction', 'author' => 'Sneed' },
         { 'name' => 'True story', 'author' => 'Honest Abe' }
       ])
@@ -52,7 +52,7 @@ True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
     end
 
     it 'should return csv' do
-      expect(subject.each.to_a).to eq([
+      expect(subject.to_a).to eq([
         {
           'name' => 'Big Fiction',
           'author' => 'Sneed',

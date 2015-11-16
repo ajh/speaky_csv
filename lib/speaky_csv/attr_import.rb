@@ -3,6 +3,8 @@ require 'csv'
 module SpeakyCsv
   # Imports a csv file as attribute hashes.
   class AttrImport
+    include Enumerable
+
     def initialize(config, input_io)
       @config = config
       @input_io = input_io
@@ -11,7 +13,16 @@ module SpeakyCsv
     # yields successive
     def each
       errors.clear
+      block_given? ? enumerator.each { |a| yield a } : enumerator
+    end
 
+    def errors
+      @errors ||= ActiveModel::Errors.new(self)
+    end
+
+    private
+
+    def enumerator
       Enumerator.new do |yielder|
         csv = CSV.new @input_io, headers: true
 
@@ -43,10 +54,6 @@ module SpeakyCsv
           yielder << attrs
         end
       end
-    end
-
-    def errors
-      @errors ||= ActiveModel::Errors.new(self)
     end
   end
 end
