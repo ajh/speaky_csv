@@ -42,18 +42,18 @@ module SpeakyCsv
             end
           end
 
-          ids = rows.map { |attrs| attrs['id'] }
+          keys = rows.map { |attrs| attrs[@config.primary_key.to_s] }
           records = @klass.includes(@config.has_manys.keys)
-            .where(id: ids)
-            .inject({}) { |a, e| a[e.id.to_s] = e; a }
+            .where(@config.primary_key => keys)
+            .inject({}) { |a, e| a[e.send(@config.primary_key).to_s] = e; a }
 
           rows.each do |attrs|
             # TODO: What if there's no id field?
             # @config.fields.include?(:id) || break
 
-            record = if attrs['id'].present?
+            record = if attrs[@config.primary_key.to_s].present?
                        # TODO: what if can't find record?
-                       records[attrs['id']]
+                       records[attrs[@config.primary_key.to_s]]
                      else
                        @klass.new
                      end

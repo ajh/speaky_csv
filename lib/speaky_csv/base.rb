@@ -36,18 +36,23 @@ module SpeakyCsv
   # define_csv_fields. Used to configure speaky csv.
   class Builder
     attr_reader \
+      :export_only_fields,
       :fields,
       :has_manys,
       :has_ones,
-      :export_only_fields
+      :primary_key
 
     def initialize
-      @fields = []
       @export_only_fields = []
-      @has_ones = {}
+      @fields = []
       @has_manys = {}
+      @has_ones = {}
+      @primary_key = :id
     end
 
+    # Add one or many fields to the csv format.
+    #
+    # If options are passed, they apply to all given fields.
     def field(*fields, export_only: false, required: false)
       @fields += fields.map(&:to_sym)
       @fields.uniq!
@@ -58,6 +63,14 @@ module SpeakyCsv
       end
 
       nil
+    end
+
+    # Define a custom primary key. By default an `id` column as used.
+    #
+    # Accepts the same options as #field
+    def primary_key=(name, options={})
+      field name, options
+      @primary_key = name.to_sym
     end
 
     def has_one(name)

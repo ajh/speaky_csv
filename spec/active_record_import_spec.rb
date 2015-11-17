@@ -91,6 +91,30 @@ id,_destroy
     end
   end
 
+  context 'with custom primary_key' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.primary_key = :name
+          d.field :author
+        end
+      end
+    end
+
+    let!(:book) { Book.create! id: 1, name: 'Big Fiction', author: 'Sneed' }
+
+    let(:io) do
+      StringIO.new <<-CSV
+name,author
+Big Fiction,Sneed
+      CSV
+    end
+
+    it 'finds by primary key' do
+      expect(record).to eq book
+    end
+  end
+
   context 'with has_many field' do
     before do
       presenter_klass.class_eval do
