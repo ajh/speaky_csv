@@ -36,8 +36,6 @@ module SpeakyCsv
     end
 
     def enumerator
-      errors.clear
-
       Enumerator.new do |yielder|
         # header row
         yielder << CSV::Row.new(@config.fields, @config.fields, true).to_csv
