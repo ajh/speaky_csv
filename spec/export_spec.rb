@@ -37,11 +37,11 @@ True story,Honest Abe
       end
     end
 
-    context 'with output_only fields' do
+    context 'with export_only fields' do
       before do
         presenter_klass.class_eval do
           define_csv_fields do |d|
-            d.field 'name', output_only: true
+            d.field 'name', export_only: true
           end
         end
       end
@@ -94,13 +94,13 @@ True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
       end
     end
 
-    context 'with output only has_many field' do
+    context 'with export_only has_many field' do
       before do
         presenter_klass.class_eval do
           define_csv_fields do |d|
             d.field :id
             d.has_many 'reviews' do |r|
-              r.field :tomatoes, output_only: true
+              r.field :tomatoes, export_only: true
             end
           end
         end

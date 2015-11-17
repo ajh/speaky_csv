@@ -29,7 +29,7 @@ Or install it yourself as:
 * required fields (make `lock_version` required for example)
 * configurable id field (key off an `external_id` for example)
 * validations
-* output only fields
+* export only fields
 
 ## Usage
 
