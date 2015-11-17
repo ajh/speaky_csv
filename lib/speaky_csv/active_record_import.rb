@@ -9,26 +9,27 @@ module SpeakyCsv
     QUERY_BATCH_SIZE = 20
     TRUE_VALUES = ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES
 
-    def initialize(config, attr_enumerator, klass)
+    attr_accessor :errors
+
+    def initialize(config, input_io, klass)
       @config = config
-      @attr_enumerator = attr_enumerator
+      @errors = ActiveModel::Errors.new(self)
       @klass = klass
+
+      @attr_import = AttrImport.new @config, input_io
+      @attr_import.errors = @errors
     end
 
-    # yields successive
     def each
       errors.clear
       block_given? ? enumerator.each { |a| yield a } : enumerator
-    end
-
-    def errors
-      @errors ||= ActiveModel::Errors.new(self)
     end
 
     private
 
     def enumerator
       Enumerator.new do |yielder|
+        attr_enumerator = @attr_import.each
         done = false
 
         while done == false
@@ -36,7 +37,7 @@ module SpeakyCsv
 
           QUERY_BATCH_SIZE.times do
             begin
-              rows << @attr_enumerator.next
+              rows << attr_enumerator.next
             rescue StopIteration
               done = true
             end

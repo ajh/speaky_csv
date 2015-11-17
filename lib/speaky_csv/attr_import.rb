@@ -5,19 +5,18 @@ module SpeakyCsv
   class AttrImport
     include Enumerable
 
+    attr_accessor :errors
+
     def initialize(config, input_io)
       @config = config
       @input_io = input_io
+      @errors = ActiveModel::Errors.new(self)
     end
 
     # yields successive
     def each
       errors.clear
       block_given? ? enumerator.each { |a| yield a } : enumerator
-    end
-
-    def errors
-      @errors ||= ActiveModel::Errors.new(self)
     end
 
     private

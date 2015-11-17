@@ -1,36 +1,4 @@
 module SpeakyCsv
-  # Inherit from this class when using SpeakyCsv
-  class Base
-    class_attribute :csv_field_builder
-
-    def self.define_csv_fields
-      b = Builder.new
-      yield b
-      self.csv_field_builder = b
-    end
-
-    # Return a new exporter instance
-    def exporter(records_enumerator)
-      Export.new self.class.csv_field_builder,
-                 records_enumerator
-    end
-
-    def attr_importer(input_io)
-      AttrImport.new self.class.csv_field_builder,
-                     input_io
-    end
-
-    def active_record_importer(input_io, klass)
-      attr_importer = AttrImport.new \
-        self.class.csv_field_builder,
-        input_io
-
-      ActiveRecordImport.new \
-        self.class.csv_field_builder,
-        attr_importer.each,
-        klass
-    end
-  end
 
   # An instance of this class is yielded to the block passed to
   # define_csv_fields. Used to configure speaky csv.
@@ -53,7 +21,7 @@ module SpeakyCsv
     # Add one or many fields to the csv format.
     #
     # If options are passed, they apply to all given fields.
-    def field(*fields, export_only: false, required: false)
+    def field(*fields, export_only: false)
       @fields += fields.map(&:to_sym)
       @fields.uniq!
 
@@ -74,19 +42,54 @@ module SpeakyCsv
     end
 
     def has_one(name)
-      builder = self.class.new
-      yield builder
-      @has_ones[name.to_sym] = self.class.new
+      @has_ones[name.to_sym] ||= self.class.new
+      yield @has_ones[name.to_sym]
 
       nil
     end
 
     def has_many(name)
-      builder = self.class.new
-      yield builder
-      @has_manys[name.to_sym] = builder
+      @has_manys[name.to_sym] ||= self.class.new
+      yield @has_manys[name.to_sym]
 
       nil
+    end
+
+    def dup
+      other = super
+      other.instance_variable_set '@has_manys', @has_manys.deep_dup
+      other.instance_variable_set '@has_ones', @has_ones.deep_dup
+
+      other
+    end
+  end
+
+  # Inherit from this class when using SpeakyCsv
+  class Base
+    class_attribute :csv_field_builder
+    self.csv_field_builder = Builder.new
+
+    def self.define_csv_fields
+      self.csv_field_builder = csv_field_builder.deep_dup
+      yield csv_field_builder
+    end
+
+    # Return a new exporter instance
+    def exporter(records_enumerator)
+      Export.new self.class.csv_field_builder,
+                 records_enumerator
+    end
+
+    def attr_importer(input_io)
+      AttrImport.new self.class.csv_field_builder,
+                     input_io
+    end
+
+    def active_record_importer(input_io, klass)
+      ActiveRecordImport.new \
+        self.class.csv_field_builder,
+        input_io,
+        klass
     end
   end
 end

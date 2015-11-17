@@ -229,6 +229,7 @@ id,name,author,_destroy
 
     def expect_changes_to_be_correct
       records = subject.to_a
+
       aggregate_failures 'changes' do
         expect(records.length).to eq 4
         new_one = records.find(&:new_record?)
@@ -275,6 +276,17 @@ id,name,author,_destroy
       it 'works' do
         expect_changes_to_be_correct
       end
+    end
+  end
+
+  context 'when csv is invalid' do
+    before do
+      allow(CSV).to receive(:new).and_raise(CSV::MalformedCSVError)
+    end
+
+    it 'adds an error' do
+      expect(subject.to_a).to eq []
+      expect(subject.errors[:csv]).to be_present
     end
   end
 end
