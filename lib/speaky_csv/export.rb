@@ -23,21 +23,37 @@ module SpeakyCsv
 
     private
 
+    def valid_field?(record, field, prefix: nil)
+      return true if record.respond_to? field
+
+      error_name = prefix ? "#{prefix}_#{field}" : field
+
+      if errors[error_name].blank?
+        errors.add error_name, "is not a method for class #{record.class}"
+      end
+
+      false
+    end
+
     def enumerator
+      errors.clear
+
       Enumerator.new do |yielder|
         # header row
         yielder << CSV::Row.new(@config.fields, @config.fields, true).to_csv
 
         @records_enumerator.each do |record|
-          row = CSV::Row.new \
-            @config.fields,
-            @config.fields.map { |f| record.send f }
+          values = @config.fields
+                   .select { |f| valid_field? record, f }
+                   .map { |f| record.send f }
 
-          @config.has_manys.each do |name, config|
-            record.send(name).each_with_index do |has_many_item, index|
-              config.fields.each do |field|
+          row = CSV::Row.new @config.fields, values
+
+          @config.has_manys.select { |a| valid_field? record, a }.each do |name, config|
+            record.send(name).each_with_index do |has_many_record, index|
+              config.fields.select { |f| valid_field? has_many_record, f, prefix: name }.each do |field|
                 row << "#{name.to_s.singularize}_#{index}_#{field}"
-                row << has_many_item.send(field)
+                row << has_many_record.send(field)
               end
             end
           end
