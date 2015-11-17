@@ -32,6 +32,8 @@ module SpeakyCsv
         attr_enumerator = @attr_import.each
         done = false
 
+        row_index = 1
+
         while done == false
           rows = []
 
@@ -49,15 +51,18 @@ module SpeakyCsv
             .inject({}) { |a, e| a[e.send(@config.primary_key).to_s] = e; a }
 
           rows.each do |attrs|
-            # TODO: What if there's no id field?
-            # @config.fields.include?(:id) || break
+            row_index += 1
 
             record = if attrs[@config.primary_key.to_s].present?
-                       # TODO: what if can't find record?
                        records[attrs[@config.primary_key.to_s]]
                      else
                        @klass.new
                      end
+
+            unless record
+              errors.add "row_#{row_index}", "record not found with primary key #{attrs[@config.primary_key]}"
+              next
+            end
 
             if @config.fields.include?(:_destroy)
               if TRUE_VALUES.include?(attrs['_destroy'])
@@ -77,8 +82,11 @@ module SpeakyCsv
               end
             end
 
-            # TODO: what if attrs has unknown attribute? ActiveRecord::UnknownAttributeError
-            record.attributes = attrs
+            begin
+              record.attributes = attrs
+            rescue ActiveRecord::UnknownAttributeError
+              errors.add "row_#{row_index}", "record doesn't respond to some configured fields: #{$!.message}"
+            end
 
             yielder << record
           end

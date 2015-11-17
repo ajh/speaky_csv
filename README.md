@@ -29,7 +29,7 @@ Or install it yourself as:
 * [x] configurable id field (key off an `external_id` for example)
 * [x] export validations
 * [x] attr import validations
-* [ ] active record import validations
+* [x] active record import validations
 * [ ] `has_one` associations
 * [ ] required fields (make `lock_version` required for example)
 

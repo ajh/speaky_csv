@@ -115,6 +115,52 @@ Big Fiction,Sneed
     end
   end
 
+  context 'and no record with primary key exists' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field :id
+        end
+      end
+    end
+
+    let(:io) do
+      StringIO.new <<-CSV
+id,name,author
+1,Big Fiction,Sneed
+      CSV
+    end
+
+    it 'returns an error' do
+      expect(subject.to_a).to eq []
+      expect(subject.errors[:row_2]).to be_present
+    end
+  end
+
+  context 'when record doesnt have defined attribute' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field :id, :whats_this
+        end
+      end
+    end
+
+    let!(:book) { Book.create! id: 1, name: 'Big Fiction', author: 'Sneed' }
+
+    let(:io) do
+      StringIO.new <<-CSV
+id,whats_this
+1,unknown
+      CSV
+    end
+
+    it 'adds an error' do
+      expect(record).to eq book
+      expect(subject.errors[:row_2]).to be_present
+    end
+  end
+
   context 'with has_many field' do
     before do
       presenter_klass.class_eval do
