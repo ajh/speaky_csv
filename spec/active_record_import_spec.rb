@@ -96,7 +96,9 @@ id,_destroy
       presenter_klass.class_eval do
         define_csv_fields do |d|
           d.field :id
-          d.has_many 'reviews', %w(id tomatoes publication _destroy)
+          d.has_many 'reviews' do |r|
+            r.field :id, :tomatoes, :publication, :_destroy
+          end
         end
       end
     end

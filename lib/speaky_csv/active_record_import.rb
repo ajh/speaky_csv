@@ -70,9 +70,9 @@ module SpeakyCsv
             end
 
             @config.has_manys.keys.each do |name|
-              if attrs.key?(name)
+              if attrs.key?(name.to_s)
                 # assume nested attributes feature is used
-                attrs["#{name}_attributes"] = attrs.delete name
+                attrs["#{name}_attributes"] = attrs.delete name.to_s
               end
             end
 

@@ -61,7 +61,9 @@ Big Fiction
         presenter_klass.class_eval do
           define_csv_fields do |d|
             d.field 'name', 'author'
-            d.has_many 'reviews', %w(tomatoes publication)
+            d.has_many 'reviews' do |r|
+              r.field :tomatoes, :publication
+            end
           end
         end
       end
@@ -88,6 +90,28 @@ Big Fiction
 name,author
 Big Fiction,Sneed,review_0_tomatoes,99,review_0_publication,Post,review_1_tomatoes,15,review_1_publication,Daily
 True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
+        CSV
+      end
+    end
+
+    context 'with output only has_many field' do
+      before do
+        presenter_klass.class_eval do
+          define_csv_fields do |d|
+            d.field :id
+            d.has_many 'reviews' do |r|
+              r.field :tomatoes, output_only: true
+            end
+          end
+        end
+      end
+
+      let(:records) { [double('book1', id: 22, reviews: [double(tomatoes: 99)])] }
+
+      it 'should write field' do
+        expect(output).to eq <<-CSV
+id
+22,review_0_tomatoes,99
         CSV
       end
     end

@@ -56,14 +56,24 @@ module SpeakyCsv
         @output_only_fields += fields.map(&:to_sym)
         @output_only_fields.uniq!
       end
+
+      nil
     end
 
-    def has_one(name, fields)
-      @has_ones[name] = fields.map(&:to_sym)
+    def has_one(name)
+      builder = self.class.new
+      yield builder
+      @has_ones[name.to_sym] = self.class.new
+
+      nil
     end
 
-    def has_many(name, fields)
-      @has_manys[name] = fields.map(&:to_sym)
+    def has_many(name)
+      builder = self.class.new
+      yield builder
+      @has_manys[name.to_sym] = builder
+
+      nil
     end
   end
 end

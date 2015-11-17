@@ -60,7 +60,9 @@ id,name
       presenter_klass.class_eval do
         define_csv_fields do |d|
           d.field 'name', 'author'
-          d.has_many 'reviews', %w(tomatoes publication)
+          d.has_many 'reviews' do |r|
+            r.field :tomatoes, :publication
+          end
         end
       end
     end
@@ -74,7 +76,7 @@ True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
       io.rewind
     end
 
-    it 'should return csv' do
+    it 'should return attrs' do
       expect(subject.to_a).to eq([
         {
           'name' => 'Big Fiction',
@@ -92,6 +94,31 @@ True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
           ]
         }
       ])
+    end
+  end
+
+  context 'with output_only has_many field' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field :id
+          d.has_many :reviews do |r|
+            r.field :tomatoes, output_only: true
+          end
+        end
+      end
+    end
+
+    before do
+      io.write <<-CSV
+id
+22,reviews_0_tomatoes,99
+      CSV
+      io.rewind
+    end
+
+    it 'should exclude field' do
+      expect(subject.to_a).to eq([{'id' => '22'}])
     end
   end
 

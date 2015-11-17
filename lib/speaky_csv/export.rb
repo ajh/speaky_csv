@@ -33,10 +33,10 @@ module SpeakyCsv
             @config.fields,
             @config.fields.map { |f| record.send f }
 
-          @config.has_manys.each do |name, fields|
+          @config.has_manys.each do |name, config|
             record.send(name).each_with_index do |has_many_item, index|
-              fields.each do |field|
-                row << "#{name.singularize}_#{index}_#{field}"
+              config.fields.each do |field|
+                row << "#{name.to_s.singularize}_#{index}_#{field}"
                 row << has_many_item.send(field)
               end
             end

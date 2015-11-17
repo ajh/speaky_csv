@@ -47,6 +47,12 @@ module SpeakyCsv
             has_many_field = m[3]
             has_many_value = row[i + 1]
 
+            has_many_config = @config.has_manys[has_many_name.to_sym]
+
+            next unless has_many_config
+            next unless has_many_config.fields.include?(has_many_field.to_sym)
+            next if has_many_config.output_only_fields.include?(has_many_field.to_sym)
+
             attrs[has_many_name] ||= []
             attrs[has_many_name][has_many_index] ||= {}
             attrs[has_many_name][has_many_index][has_many_field] = has_many_value
