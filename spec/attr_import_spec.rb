@@ -49,7 +49,12 @@ id,name
     end
 
     it 'should exclude field' do
-      expect(subject.to_a).to eq([{'id' => '22'}])
+      expect(subject.to_a).to eq([{ 'id' => '22' }])
+    end
+
+    it 'should log it' do
+      subject.to_a
+      expect(subject.log).to match(/name/)
     end
   end
 
@@ -75,6 +80,11 @@ True story,NYC
         { 'name' => 'Big Fiction' },
         { 'name' => 'True story' }
       ])
+    end
+
+    it 'should log it' do
+      subject.to_a
+      expect(subject.log).to match(/setting/)
     end
   end
 
@@ -195,7 +205,7 @@ Big Fiction,review_0_tomatoes,99,review_0_auther,Meanie
 
     it 'adds an error' do
       expect(subject.to_a).to eq []
-      expect(subject.errors[:csv]).to be_present
+      expect(subject.log).to match(/csv is malformed/)
     end
   end
 

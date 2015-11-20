@@ -5,7 +5,7 @@ describe SpeakyCsv::Export do
   let(:presenter_klass) { Class.new SpeakyCsv::Base }
 
   let(:io) { StringIO.new }
-  subject { presenter_klass.new.exporter records.each }
+  subject { presenter_klass.exporter records.each }
 
   def output
     subject.to_a.join
@@ -66,9 +66,9 @@ Big Fiction
 
     let(:records) { [double('book1')] }
 
-    it 'adds an error' do
+    it 'adds an error to the log' do
       subject.to_a
-      expect(subject.errors[:unknown]).to be_present
+      expect(subject.log).to match(/unknown is not a method/)
     end
   end
 
@@ -148,7 +148,7 @@ id
 
     it 'adds an error' do
       subject.to_a
-      expect(subject.errors[:reviews_unknown]).to be_present
+      expect(subject.log).to match(/reviews_unknown is not a method/)
     end
   end
 
@@ -168,7 +168,7 @@ id
 
     it 'adds an error' do
       subject.to_a
-      expect(subject.errors[:unknowns]).to be_present
+      expect(subject.log).to match(/unknowns is not a method/)
     end
   end
 end

@@ -133,7 +133,7 @@ id,name,author
 
     it 'returns an error' do
       expect(subject.to_a).to eq []
-      expect(subject.errors[:row_2]).to be_present
+      expect(subject.log).to match(/\[row 2\]/)
     end
   end
 
@@ -157,7 +157,7 @@ id,whats_this
 
     it 'adds an error' do
       expect(record).to eq book
-      expect(subject.errors[:row_2]).to be_present
+      expect(subject.log).to match(/\[row 2\]/)
     end
   end
 
@@ -332,7 +332,7 @@ id,name,author,_destroy
 
     it 'adds an error' do
       expect(subject.to_a).to eq []
-      expect(subject.errors[:csv]).to be_present
+      expect(subject.log).to match(/csv is malformed/)
     end
   end
 end

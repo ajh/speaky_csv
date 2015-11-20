@@ -75,8 +75,8 @@ module SpeakyCsv
     end
 
     # Return a new exporter instance
-    def exporter(records_enumerator)
-      Export.new self.class.csv_field_builder,
+    def self.exporter(records_enumerator)
+      Export.new csv_field_builder,
                  records_enumerator
     end
 

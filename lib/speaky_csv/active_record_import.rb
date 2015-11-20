@@ -1,5 +1,6 @@
 require 'csv'
 require 'active_record'
+require 'English'
 
 module SpeakyCsv
   # Imports a csv file as unsaved active record instances
@@ -9,20 +10,27 @@ module SpeakyCsv
     QUERY_BATCH_SIZE = 20
     TRUE_VALUES = ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES
 
-    attr_accessor :errors
+    attr_accessor :logger
 
     def initialize(config, input_io, klass)
       @config = config
-      @errors = ActiveModel::Errors.new(self)
       @klass = klass
 
+      @log_output = StringIO.new
+      @logger = Logger.new @log_output
+
       @attr_import = AttrImport.new @config, input_io
-      @attr_import.errors = @errors
+      @attr_import.logger = @logger
     end
 
     def each
-      errors.clear
       block_given? ? enumerator.each { |a| yield a } : enumerator
+    end
+
+    # Returns a string of all the log output from the import. Or returns
+    # nothing if a custom logger was used.
+    def log
+      @log_output.string
     end
 
     private
@@ -47,8 +55,8 @@ module SpeakyCsv
 
           keys = rows.map { |attrs| attrs[@config.primary_key.to_s] }
           records = @klass.includes(@config.has_manys.keys)
-            .where(@config.primary_key => keys)
-            .inject({}) { |a, e| a[e.send(@config.primary_key).to_s] = e; a }
+                    .where(@config.primary_key => keys)
+                    .inject({}) { |a, e| a[e.send(@config.primary_key).to_s] = e; a }
 
           rows.each do |attrs|
             row_index += 1
@@ -60,7 +68,7 @@ module SpeakyCsv
                      end
 
             unless record
-              errors.add "row_#{row_index}", "record not found with primary key #{attrs[@config.primary_key]}"
+              logger.error "[row #{row_index}] record not found with primary key #{attrs[@config.primary_key]}"
               next
             end
 
@@ -85,7 +93,7 @@ module SpeakyCsv
             begin
               record.attributes = attrs
             rescue ActiveRecord::UnknownAttributeError
-              errors.add "row_#{row_index}", "record doesn't respond to some configured fields: #{$!.message}"
+              logger.error "[row #{row_index}] record doesn't respond to some configured fields: #{$ERROR_INFO.message}"
             end
 
             yielder << record

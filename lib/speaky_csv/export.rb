@@ -1,24 +1,31 @@
 require 'csv'
 require 'active_model'
+require 'stringio'
+require 'logger'
 
 module SpeakyCsv
   # Exports records as csv. Will write a csv to the given IO object
   class Export
     include Enumerable
 
+    attr_accessor :logger
+
     def initialize(config, records_enumerator)
       @config = config
       @records_enumerator = records_enumerator
+      @log_output = StringIO.new
+      @logger = Logger.new @log_output
     end
 
     # Writes csv string to io
     def each
-      errors.clear
       block_given? ? enumerator.each { |a| yield a } : enumerator
     end
 
-    def errors
-      @errors ||= ActiveModel::Errors.new(self)
+    # Returns a string of all the log output from the import. Or returns
+    # nothing if a custom logger was used.
+    def log
+      @log_output.string
     end
 
     private
@@ -27,16 +34,15 @@ module SpeakyCsv
       return true if record.respond_to? field
 
       error_name = prefix ? "#{prefix}_#{field}" : field
-
-      if errors[error_name].blank?
-        errors.add error_name, "is not a method for class #{record.class}"
-      end
+      logger.error "#{error_name} is not a method for class #{record.class}"
 
       false
     end
 
     def enumerator
-      Enumerator.new do |yielder|
+      return @enumerator if defined? @enumerator
+
+      @enumerator = Enumerator.new do |yielder|
         # header row
         yielder << CSV::Row.new(@config.fields, @config.fields, true).to_csv
 
