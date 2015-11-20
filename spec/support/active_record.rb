@@ -3,7 +3,7 @@ require 'database_cleaner'
 require 'pathname'
 
 ActiveRecord::Base.logger = Logger.new \
-  Pathname.new(__dir__).join('../active_record.log').to_s
+  Pathname.new(__dir__).join('../../log/active_record.log').to_s
 
 ActiveRecord::Base.establish_connection adapter: 'sqlite3',
                                         database:  ':memory:'

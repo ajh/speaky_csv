@@ -1,1 +1,3 @@
-spec/active_record.log
+log/*.log
+speaky_csv*.gem
+Gemfile.lock
