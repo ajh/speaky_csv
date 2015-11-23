@@ -131,8 +131,12 @@ id,name,author
       CSV
     end
 
+    it 'returns nil so row number is can known' do
+      expect(subject.each_with_index.to_a).to eq [[nil, 0]]
+    end
+
     it 'returns an error' do
-      expect(subject.to_a).to eq []
+      subject.to_a
       expect(subject.log).to match(/\[row 2\]/)
     end
   end
@@ -246,8 +250,6 @@ id
     end
   end
 
-  it "should fail when all headers aren't to the left"
-  it 'should ignore undefined variable columns'
   it 'should fail when variable columns not pair up correctly'
 
   describe 'batch behavior' do
@@ -333,6 +335,30 @@ id,name,author,_destroy
     it 'adds an error' do
       expect(subject.to_a).to eq []
       expect(subject.log).to match(/csv is malformed/)
+    end
+  end
+
+  context "with weird rows" do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field 'name', 'author'
+        end
+      end
+    end
+
+    let(:io) do
+      StringIO.new <<-CSV
+foo,bar,bax
+1,2,3,2,1
+,,
+
+hihihi
+      CSV
+    end
+
+    it "always returns a something per row" do
+      expect(subject.to_a.length).to eq 4
     end
   end
 end

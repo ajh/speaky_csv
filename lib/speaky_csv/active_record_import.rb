@@ -36,23 +36,11 @@ module SpeakyCsv
     private
 
     def enumerator
+      # One based index, where the header is row 1 and first record is row 2
+      row_index = 1
+
       Enumerator.new do |yielder|
-        attr_enumerator = @attr_import.each
-        done = false
-
-        row_index = 1
-
-        while done == false
-          rows = []
-
-          QUERY_BATCH_SIZE.times do
-            begin
-              rows << attr_enumerator.next
-            rescue StopIteration
-              done = true
-            end
-          end
-
+        @attr_import.each_slice(QUERY_BATCH_SIZE) do |rows|
           keys = rows.map { |attrs| attrs[@config.primary_key.to_s] }
           records = @klass.includes(@config.has_manys.keys)
                     .where(@config.primary_key => keys)
@@ -69,6 +57,7 @@ module SpeakyCsv
 
             unless record
               logger.error "[row #{row_index}] record not found with primary key #{attrs[@config.primary_key]}"
+              yielder << nil
               next
             end
 
