@@ -338,7 +338,7 @@ id,name,author,_destroy
     end
   end
 
-  context "with weird rows" do
+  context 'with weird rows' do
     before do
       presenter_klass.class_eval do
         define_csv_fields do |d|
@@ -357,8 +357,70 @@ hihihi
       CSV
     end
 
-    it "always returns a something per row" do
+    it 'always returns a something per row' do
       expect(subject.to_a.length).to eq 4
+    end
+  end
+
+  context 'with enumerator' do
+    subject { presenter_klass.new.active_record_importer enumerator, Book }
+
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field :id, :name, :author, :_destroy
+        end
+      end
+    end
+
+    before do
+      Book.create! id: 1, name: 'Big Fiction', author: 'Sneed'
+      Book.create! id: 2, name: 'Small Fiction', author: 'Sneed'
+      Book.create! id: 3, name: 'Awful', author: 'Snore'
+    end
+
+    let(:enumerator) do
+      Enumerator.new do |yielder|
+        [
+          { 'id' => nil,
+            'name' => 'New Fiction',
+            'author' => 'Sneed',
+            '_destroy' => nil },
+          { 'id' => '1',
+            'name' => 'Big Fiction',
+            'author' => 'Sneed',
+            '_destroy' => nil },
+          { 'id' => '2',
+            'name' => 'Wee Little Fiction',
+            'author' => 'Sneed',
+            '_destroy' => nil },
+          { 'id' => '3',
+            'name' => nil,
+            'author' => nil,
+            '_destroy' => 'true' }
+        ].each { |h| yielder << h }
+      end
+    end
+
+    it 'works' do
+      records = subject.to_a
+      expect(records.length).to eq(4)
+
+      aggregate_failures do
+        expect(records[0]).to be_new_record
+        expect(records[0].attributes).to include('name' => 'New Fiction',
+                                                 'author' => 'Sneed')
+
+        expect(records[1]).to_not be_changed
+        expect(records[1].attributes).to include('id' => 1,
+                                                 'name' => 'Big Fiction',
+                                                 'author' => 'Sneed')
+
+        expect(records[2].name).to eq 'Wee Little Fiction'
+        expect(records[2]).to be_changed # not saved yet
+
+        expect(records[3]).to be_marked_for_destruction
+      end
     end
   end
 end

@@ -209,7 +209,7 @@ Big Fiction,review_0_tomatoes,99,review_0_auther,Meanie
     end
   end
 
-  context "with weird rows" do
+  context 'with weird rows' do
     before do
       presenter_klass.class_eval do
         define_csv_fields do |d|
@@ -228,7 +228,7 @@ hihihi
       CSV
     end
 
-    it "always returns a hash per row" do
+    it 'always returns a hash per row' do
       expect(subject.to_a.length).to eq 4
     end
   end

@@ -12,15 +12,19 @@ module SpeakyCsv
 
     attr_accessor :logger
 
-    def initialize(config, input_io, klass)
+    def initialize(config, input_io_or_enumerable, klass)
       @config = config
       @klass = klass
 
       @log_output = StringIO.new
       @logger = Logger.new @log_output
 
-      @attr_import = AttrImport.new @config, input_io
-      @attr_import.logger = @logger
+      if duck_type_is_io?(input_io_or_enumerable)
+        @rx = AttrImport.new @config, input_io_or_enumerable
+        @rx.logger = @logger
+      else
+        @rx = input_io_or_enumerable
+      end
     end
 
     def each
@@ -40,7 +44,7 @@ module SpeakyCsv
       row_index = 1
 
       Enumerator.new do |yielder|
-        @attr_import.each_slice(QUERY_BATCH_SIZE) do |rows|
+        @rx.each_slice(QUERY_BATCH_SIZE) do |rows|
           keys = rows.map { |attrs| attrs[@config.primary_key.to_s] }
           records = @klass.includes(@config.has_manys.keys)
                     .where(@config.primary_key => keys)
@@ -89,6 +93,11 @@ module SpeakyCsv
           end
         end
       end
+    end
+
+    def duck_type_is_io?(val)
+      # check some arbitrary methods
+      val.respond_to?(:gets) && val.respond_to?(:seek)
     end
   end
 end
