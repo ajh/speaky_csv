@@ -51,8 +51,6 @@ module SpeakyCsv
                     .inject({}) { |a, e| a[e.send(@config.primary_key).to_s] = e; a }
 
           rows.each do |attrs|
-            row_index += 1
-
             record = if attrs[@config.primary_key.to_s].present?
                        records[attrs[@config.primary_key.to_s]]
                      else
@@ -84,12 +82,14 @@ module SpeakyCsv
             end
 
             begin
+              # TODO: do this one attr at a time, so successful attrs can be assigned while unsuccessful ones will be ignored
               record.attributes = attrs
             rescue ActiveRecord::UnknownAttributeError
               logger.error "[row #{row_index}] record doesn't respond to some configured fields: #{$ERROR_INFO.message}"
             end
 
             yielder << record
+            row_index += 1
           end
         end
       end

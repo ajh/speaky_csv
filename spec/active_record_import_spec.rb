@@ -137,7 +137,7 @@ id,name,author
 
     it 'returns an error' do
       subject.to_a
-      expect(subject.log).to match(/\[row 2\]/)
+      expect(subject.log).to match(/\[row 1\]/)
     end
   end
 
@@ -161,7 +161,7 @@ id,whats_this
 
     it 'adds an error' do
       expect(record).to eq book
-      expect(subject.log).to match(/\[row 2\]/)
+      expect(subject.log).to match(/\[row 1\]/)
     end
   end
 
