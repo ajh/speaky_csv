@@ -423,4 +423,22 @@ hihihi
       end
     end
   end
+
+  context "with includes options" do
+    before { subject.includes :publisher }
+
+    it "loads active records with includes option" do
+      # I don't know how to verify this so I'll just make sure it doesnt crash
+      expect { subject.to_a }.to_not raise_error
+    end
+  end
+
+  context "with includes options" do
+    before { subject.eager_load :publisher }
+
+    it "loads active records with eager_log option" do
+      # I don't know how to verify this so I'll just make sure it doesnt crash
+      expect { subject.to_a }.to_not raise_error
+    end
+  end
 end

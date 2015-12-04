@@ -37,6 +37,19 @@ module SpeakyCsv
       @log_output.string
     end
 
+    # Add includes options which will be used when querying records.
+    #
+    # Useful to avoid N+1 type problems. Configured has_manys are automaticaly
+    # included and don't need to be specified here.
+    def includes(options)
+      @includes = options
+    end
+
+    # Add eager_load options which will be used when querying records.
+    def eager_load(options)
+      @eager_load = options
+    end
+
     private
 
     def enumerator
@@ -46,9 +59,12 @@ module SpeakyCsv
       Enumerator.new do |yielder|
         @rx.each_slice(QUERY_BATCH_SIZE) do |rows|
           keys = rows.map { |attrs| attrs[@config.primary_key.to_s] }
-          records = @klass.includes(@config.has_manys.keys)
-                    .where(@config.primary_key => keys)
-                    .inject({}) { |a, e| a[e.send(@config.primary_key).to_s] = e; a }
+          query = @klass.includes(@config.has_manys.keys)
+                  .where(@config.primary_key => keys)
+          query = query.includes(@includes) if @includes
+          query = query.eager_load(@eager_load) if @eager_load
+
+          records = query.inject({}) { |a, e| a[e.send(@config.primary_key).to_s] = e; a }
 
           rows.each do |attrs|
             record = if attrs[@config.primary_key.to_s].present?
