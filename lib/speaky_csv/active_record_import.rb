@@ -1,6 +1,5 @@
 require 'csv'
 require 'active_record'
-require 'English'
 
 module SpeakyCsv
   # Imports a csv file as unsaved active record instances
@@ -97,11 +96,13 @@ module SpeakyCsv
               end
             end
 
-            begin
-              # TODO: do this one attr at a time, so successful attrs can be assigned while unsuccessful ones will be ignored
-              record.attributes = attrs
-            rescue ActiveRecord::UnknownAttributeError
-              logger.error "[row #{row_index}] record doesn't respond to some configured fields: #{$ERROR_INFO.message}"
+            attrs.each do |attr, value|
+              writer_method = "#{attr}="
+              if record.respond_to? writer_method
+                record.send writer_method, value
+              else
+                logger.error "[row #{row_index}] record doesn't respond to #{attr.inspect}"
+              end
             end
 
             yielder << record

@@ -145,7 +145,7 @@ id,name,author
     before do
       presenter_klass.class_eval do
         define_csv_fields do |d|
-          d.field :id, :whats_this
+          d.field :id, :name, :whats_this
         end
       end
     end
@@ -154,14 +154,19 @@ id,name,author
 
     let(:io) do
       StringIO.new <<-CSV
-id,whats_this
-1,unknown
+id,name,whats_this
+1,Huge Fiction,unknown
       CSV
     end
 
     it 'adds an error' do
       expect(record).to eq book
       expect(subject.log).to match(/\[row 1\]/)
+    end
+
+    it 'assigns other attributes' do
+      expect(record).to eq book
+      expect(record.name).to eq 'Huge Fiction'
     end
   end
 
