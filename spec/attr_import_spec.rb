@@ -4,7 +4,7 @@ describe SpeakyCsv::AttrImport do
   let(:presenter_klass) { Class.new SpeakyCsv::Base }
 
   let(:io) { StringIO.new }
-  subject { presenter_klass.new.attr_importer io }
+  subject { presenter_klass.attr_importer io }
 
   context 'with fields' do
     before do

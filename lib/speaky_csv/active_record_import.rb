@@ -73,7 +73,7 @@ module SpeakyCsv
                      end
 
             unless record
-              logger.error "[row #{row_index}] record not found with primary key #{attrs[@config.primary_key]}"
+              logger.error "[row #{row_index}] record not found with primary key: #{attrs[@config.primary_key.to_s].inspect}"
               yielder << nil
               next
             end

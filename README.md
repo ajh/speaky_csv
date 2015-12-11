@@ -2,54 +2,10 @@
 
 CSV imports and exports for ActiveRecord.
 
-## For example
+Speaky CSV features:
 
-Lets say there exists a User class:
-
-    # in app/models/user.rb
-    class User < ActiveRecord::Base
-      ...
-    end
-
-Speaky can be used to import and export user records. The definition of
-the csv format could look like this:
-
-    # in app/csv/user_csv.rb
-    class UserCsv < SpeakyCsv::Base
-      define_csv_fields do |config|
-        config.field :id, :email, :roles
-      end
-    end
-
-Now lets import some user records. An import csv will always have an
-initial header row, with each following row representing a user record.
-lets import the following csv file (whitespace for clarity):
-
-    # my_import.csv
-    id, email,              roles
-    22, admin@example.test, admin
-      , newbie@user.test,   user
-
-This file can be imported like this:
-
-    File.open "my_import.csv", "r" do |io|
-      importer = UserCsv.new.active_record_importer io, User
-      importer.each { |user| user.save }
-    end
-
-## Custom CSV formats
-
-Speaky
-
-
-Speaky allows customization of csv files to a degree, but some
-conventions need to be followed.
-
-At a high level, the csv
-ends up looking similar to the way active record data gets serialized
-into form parameters which will be familiar to many rails developers.
-The advantage of this approach is that associated records be imported
-and exported.
+* An easy to use API,
+* Speedy stream processing using enumerators.
 
 ## Installation
 
@@ -67,34 +23,166 @@ Or install it yourself as:
 
 ## Usage
 
-Subclass SpeakyCsv::Base and define a csv format for an active
-record class. For example:
+Let's say you build software for your local public library and there
+exists a Book model:
 
-    # in app/csv/user_csv.rb
-    class UserCsv < SpeakyCsv::Base
-      define_csv_fields do |config|
-        config.field :id, :first_name, :last_name, :email
+```ruby
+# in app/models/book.rb
+class Book < ActiveRecord::Base
+  # ...
+end
+```
 
-        config.has_many :roles do |r|
-          r.field :role_name
-        end
-      end
-    end
+Speaky can be used to import and export book records using csv files.
+The definition of the csv format could look like this:
 
-See the rdoc for more details on how to configure the format.
+```ruby
+# in app/csvs/book_csv.rb
+class BookCsv < SpeakyCsv::Base
+  define_csv_fields do |config|
+    config.field :id, :author
+  end
+end
+```
 
-Once the format is defined records can be exported like this:
+This defines a CSV format that looks like this:
 
-    $ exporter = UserCsv.new.exporter(User.all)
-    $ File.open('users.csv', 'w') { |io| exporter.each { |row| io.write row } }
+    id,author
+    3,Stevenson
+    19,Melville
+    1,Macaulay
 
-TODO:
+## Importing
 
-* describe importing to attribute list
-* describe importing to to active records
-* describe how to transform with an enumerator
+Now lets import some books. Speaky will expect an import to have
+an initial header row, and each subsequent row to represent a user record.
+Columns can be in any order.
 
-## Recommendations
+Let's create a book by importing a csv.
+
+```ruby
+csv_io = StringIO.new <<-CSV
+id,author
+,Sneed
+CSV
+```
+
+Notice the empty id column. This tells speaky csv that the operation is
+a create. The file can be imported like this:
+
+```ruby
+importer = BookCsv.active_record_importer csv_io, Book
+importer.each { |book| book.save }
+Book.last.author == 'Sneed' # => true
+```
+
+This importer is an `active record importer`, which means that `#each`
+will return active record instances. There is also an `attribute importer`
+that will return hashes of attribute name => values. See the rdoc for
+more info on that.
+
+##### Update
+
+Let's change the author value:
+
+```ruby
+csv_io = StringIO.new <<-CSV
+id,author
+1,Simon Sneed
+CSV
+```
+
+Now there is an id value in the csv. Having an id value will cause
+speaky csv to find the record with the given id and update it.
+
+```ruby
+importer = BookCsv.active_record_importer csv_io, Book
+importer.each { |book| book.save }
+expect(Book.last.author).to eq 'Simon Sneed'
+```
+
+If a record with the given id isn't found, the importer will return a
+nil for that row instead of an active record and add a message a log
+file:
+
+```ruby
+csv_io = StringIO.new <<-CSV
+id,author
+234,I dont exist
+CSV
+
+importer = BookCsv.active_record_importer csv_io, Book
+importer.to_a # => [nil]
+importer.log  # => '...[row 1] record not found with primary key: "234"....'
+```
+
+For more info on the log file see below.
+
+##### Destroy
+
+To destroy the record, we'll need to change the csv format to add a
+`_destroy` field. If this column contains a true value like: 'true' or
+'1', the record will be marked for destruction.
+
+Marking an active record for destruction is a little known active record
+feature documented here:
+http://api.rubyonrails.org/v4.2.0/classes/ActiveRecord/AutosaveAssociation.html#method-i-marked_for_destruction-3F
+
+```ruby
+# in app/csvs/book_csv.rb
+class BookCsv < SpeakyCsv::Base
+  define_csv_fields do |config|
+    config.field :id, :author, :_destroy
+  end
+end
+
+csv_io = StringIO.new <<-CSV
+id,_destroy
+1,true
+CSV
+
+importer = BookCsv.active_record_importer csv_io, Book
+book = importer.to_a.first
+if book.marked_for_destruction?
+  book.destroy
+end
+```
+
+## Exporting
+
+Creating a csv file from records in a database can be done with the
+exporter:
+
+```ruby
+books = [
+  Book.create!(author: 'Stevenson'),
+  Book.create!(author: 'Melville'),
+  Book.create!(author: 'Macaulay'),
+]
+
+exporter = BookCsv.exporter books
+
+io = StringIO.new
+exporter.each { |row| io.write row }
+```
+
+`io` will have the following contents:
+
+    id,author,_destroy
+    2,Stevenson,false
+    3,Melville,false
+    4,Macaulay,false
+
+## Log Messages
+
+Importers and exporters use a `Logger` instance to write messages during
+processing. The default logger writes to a string that can be retrieved
+by the `#log` method. A custom Logger can be set by the `#logger=`
+method.
+
+See `Logger` in the ruby stdlib for more details.
+
+## Best Practices
 
 * Add `id` and `_destroy` fields for active record models
 * For associations, use `nested_attributes_for` and add `id` and

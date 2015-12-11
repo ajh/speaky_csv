@@ -98,8 +98,8 @@ module SpeakyCsv
     #   end
     # end
     #
-    def attr_importer(input_io)
-      AttrImport.new self.class.csv_field_builder,
+    def self.attr_importer(input_io)
+      AttrImport.new csv_field_builder,
                      input_io
     end
 
@@ -125,9 +125,9 @@ module SpeakyCsv
     # Optionally an Enumerable instance can be passed instead of an IO
     # instance. The enumerable should return attr hashes. This may be helpful
     # for transforming or chaining Enumerables.
-    def active_record_importer(input_io_or_enumerable, klass)
+    def self.active_record_importer(input_io_or_enumerable, klass)
       ActiveRecordImport.new \
-        self.class.csv_field_builder,
+        csv_field_builder,
         input_io_or_enumerable,
         klass
     end

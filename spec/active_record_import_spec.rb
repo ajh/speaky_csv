@@ -5,7 +5,7 @@ describe SpeakyCsv::ActiveRecordImport, :db do
   let(:presenter_klass) { Class.new SpeakyCsv::Base }
 
   let(:io) { StringIO.new }
-  subject { presenter_klass.new.active_record_importer io, Book }
+  subject { presenter_klass.active_record_importer io, Book }
 
   def record
     unless defined? @record
@@ -119,7 +119,7 @@ Big Fiction,Sneed
     before do
       presenter_klass.class_eval do
         define_csv_fields do |d|
-          d.field :id
+          d.field :id, :name, :author
         end
       end
     end
@@ -368,7 +368,7 @@ hihihi
   end
 
   context 'with enumerator' do
-    subject { presenter_klass.new.active_record_importer enumerator, Book }
+    subject { presenter_klass.active_record_importer enumerator, Book }
 
     before do
       presenter_klass.class_eval do
