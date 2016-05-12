@@ -170,7 +170,7 @@ id,name,whats_this
     end
   end
 
-  context 'with has_many field' do
+  context 'with has_many association' do
     before do
       presenter_klass.class_eval do
         define_csv_fields do |d|
@@ -253,6 +253,82 @@ id
         expect(actual_review).to be_marked_for_destruction
       end
     end
+  end
+
+  context 'with has_one association' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field :id
+          d.has_one 'publisher' do |r|
+            r.field :id, :name, :_destroy
+          end
+        end
+      end
+    end
+
+    let!(:book) { Book.create! id: 1 }
+
+    context 'and csv has new associated record' do
+      let(:io) do
+        StringIO.new <<-CSV
+id
+1,publisher_name,Dan Blam
+        CSV
+      end
+
+      xit 'builds new record' do
+        expect(record.publisher.attributes).to include('book_id' => 1,
+                                                    'tomatoes' => 99,
+                                                    'publication' => 'Post')
+        expect(record.publisher).to be_new_record
+      end
+    end
+
+    #context 'and csv has unchanged associated record' do
+      #let(:io) do
+        #StringIO.new <<-CSV
+#id
+#1,review_0_id,1,review_0_tomatoes,99,review_0_publication,Post
+        #CSV
+      #end
+
+      #let!(:review) { Review.create! id: 1, book: book, tomatoes: 99, publication: 'Post' }
+
+      #it 'returns clean record' do
+        #expect(actual_review).to_not be_changed
+      #end
+    #end
+
+    #context 'and csv changes associated record' do
+      #let(:io) do
+        #StringIO.new <<-CSV
+#id
+#1,review_0_id,1,review_0_tomatoes,80,review_0_publication,Post
+        #CSV
+      #end
+
+      #let!(:review) { Review.create! id: 1, book: book, tomatoes: 99, publication: 'Post' }
+
+      #it 'returns clean record' do
+        #expect(actual_review.tomatoes).to eq 80
+        #expect(actual_review).to be_changed
+      #end
+    #end
+    #context 'and csv destroys associated record' do
+      #let(:io) do
+        #StringIO.new <<-CSV
+#id
+#1,review_0_id,1,review_0__destroy,true
+        #CSV
+      #end
+
+      #let!(:review) { Review.create! id: 1, book: book, tomatoes: 99, publication: 'Post' }
+
+      #it 'marks record for destruction' do
+        #expect(actual_review).to be_marked_for_destruction
+      #end
+    #end
   end
 
   it 'should fail when variable columns not pair up correctly'

@@ -201,6 +201,7 @@ See `Logger` in the ruby stdlib for more details.
 * [ ] transformations for values via accessors on class
 * [ ] public stable api for csv format definition
 * [ ] assign attrs one at a time so they don't all fail together
+* [ ] decide what empty cells mean
 
 ## Contributing
 

@@ -96,6 +96,15 @@ module SpeakyCsv
               end
             end
 
+            @config.has_ones.keys.each do |name|
+              if attrs.key?(name.to_s)
+                # assume nested attributes feature is used
+                attrs["#{name}_attributes"] = attrs.delete name.to_s
+              end
+            end
+
+            #warn attrs.inspect
+
             attrs.each do |attr, value|
               writer_method = "#{attr}="
               if record.respond_to? writer_method

@@ -129,6 +129,46 @@ True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
     end
   end
 
+  context 'with has_one fields' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field 'name', 'author'
+          d.has_one 'publisher' do |r|
+            r.field :id, :name
+          end
+        end
+      end
+    end
+
+    let(:io) do
+      StringIO.new <<-CSV
+name,author,publisher_id,publisher_name,
+Big Fiction,Sneed,,Dan Blam
+True story,Honest Abe,50,Burt Bacharach
+      CSV
+    end
+
+    it 'should return attrs' do
+      expect(subject.to_a).to eq([
+        {
+          'name' => 'Big Fiction',
+          'author' => 'Sneed',
+          'publisher' => {
+            'name' => 'Dan Blam'
+          },
+        },
+        {
+          'name' => 'True story',
+          'author' => 'Honest Abe',
+          'publisher' => {
+            'id' => '50', 'name' => 'Burt Bacharach'
+          }
+        }
+      ])
+    end
+  end
+
   context 'with export_only has_many field' do
     before do
       presenter_klass.class_eval do

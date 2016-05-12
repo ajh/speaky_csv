@@ -37,8 +37,10 @@ module SpeakyCsv
 
           csv.each do |row|
             attrs = {}
+            validate_headers row
             add_fields row, attrs
             add_has_manys row, attrs
+            add_has_ones row, attrs
             yielder << attrs
           end
 
@@ -48,19 +50,27 @@ module SpeakyCsv
       end
     end
 
+    # TODO: don't warn on has_one headers and clean up clunky loop
+    def validate_headers(row)
+      valid_headers = @config.fields - @config.export_only_fields
+      #valid_headers += @config.has_ones.map
+
+      row.headers.compact.map(&:to_sym).each do |h|
+        unless valid_headers.include?(h)
+          logger.warn "ignoring unknown column #{h}"
+        end
+      end
+    end
+
     # Adds configured fields to attrs
     def add_fields(row, attrs)
-      row.headers.compact.each do |h|
-        unless @config.fields.include?(h.to_sym)
-          logger.warn "ignoring unknown column #{h}"
-          next
-        end
-        if @config.export_only_fields.include?(h.to_sym)
-          logger.warn "ignoring unknown column #{h}"
-          next
-        end
-
-        attrs[h] = row.field h
+      fields = (@config.fields - @config.export_only_fields).map(&:to_s)
+      fields.each do |name|
+        value = row.field name
+        # This makes it hard to purposefully set values to blank via an empty
+        # cell in the csv
+        value.present? or next
+        attrs[name] = value
       end
     end
 
@@ -88,6 +98,20 @@ module SpeakyCsv
         attrs[has_many_name] ||= []
         attrs[has_many_name][has_many_index] ||= {}
         attrs[has_many_name][has_many_index][has_many_field] = has_many_value
+      end
+    end
+
+    # Adds configured has ones to attrs
+    def add_has_ones(row, attrs)
+      @config.has_ones.each do |name,assoc_config|
+        fields = (assoc_config.fields - assoc_config.export_only_fields).map(&:to_s)
+        fields.each do |f|
+          value = row.field "#{name}_#{f}"
+          # This makes it hard to purposefully set values to blank via an empty
+          # cell in the csv
+          value.present? or next
+          (attrs[name.to_s] ||= {})[f] = value
+        end
       end
     end
   end

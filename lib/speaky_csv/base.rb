@@ -40,13 +40,36 @@ module SpeakyCsv
       @primary_key = name.to_sym
     end
 
+    # Define a one to one association. This is also aliased as `belongs_to`. Expects a name and a block to
+    # define the fields on associated record.
+    #
+    # For example:
+    #
+    #   define_csv_fields do |c|
+    #     has_many 'publisher' do |p|
+    #       p.field :id, :name, :_destroy
+    #     end
+    #   end
+    #
     def has_one(name)
       @has_ones[name.to_sym] ||= self.class.new
       yield @has_ones[name.to_sym]
 
       nil
     end
+    alias :belongs_to :has_one
 
+    # Define a one to many association. Expect a name and a block to
+    # define the fields on associated records.
+    #
+    # For example:
+    #
+    #   define_csv_fields do |c|
+    #     has_many 'reviews' do |r|
+    #       r.field :id, :name, :_destroy
+    #     end
+    #   end
+    #
     def has_many(name)
       @has_manys[name.to_sym] ||= self.class.new
       yield @has_manys[name.to_sym]
