@@ -32,6 +32,7 @@ module SpeakyCsv
 
     def valid_field?(record, field, prefix: nil)
       return true if record.respond_to? field
+      return false if field == :_destroy
 
       error_name = prefix ? "#{prefix}_#{field}" : field
       logger.error "#{error_name} is not a method for class #{record.class}"
@@ -43,8 +44,13 @@ module SpeakyCsv
       return @enumerator if defined? @enumerator
 
       @enumerator = Enumerator.new do |yielder|
+        columns = @config.fields
+        columns += @config.has_ones.flat_map do |name, config|
+          config.fields.map {|f| "#{name}_#{f}" }
+        end
+
         # header row
-        yielder << CSV::Row.new(@config.fields, @config.fields, true).to_csv
+        yielder << CSV::Row.new(columns, columns, true).to_csv
 
         @records_enumerator.each do |record|
           values = @config.fields
@@ -59,6 +65,13 @@ module SpeakyCsv
                 row << "#{name.to_s.singularize}_#{index}_#{field}"
                 row << has_many_record.send(field)
               end
+            end
+          end
+
+          @config.has_ones.select { |a| valid_field? record, a }.each do |name, config|
+            has_one_record = record.send name
+            config.fields.select { |f| valid_field? has_one_record, f, prefix: name }.each do |field|
+              row << has_one_record.send(field)
             end
           end
 
