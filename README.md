@@ -52,6 +52,65 @@ This defines a CSV format that looks like this:
     19,Melville
     1,Macaulay
 
+## Exporting
+
+Creating a csv file from records in a database can be done with the
+exporter:
+
+```ruby
+books = [
+  Book.create!(author: 'Stevenson'),
+  Book.create!(author: 'Melville'),
+  Book.create!(author: 'Macaulay'),
+]
+
+exporter = BookCsv.exporter books
+
+io = StringIO.new
+exporter.each { |row| io.write row }
+```
+
+`io` will have the following contents:
+
+    id,author,_destroy
+    2,Stevenson,false
+    3,Melville,false
+    4,Macaulay,false
+
+### Exporting with associations
+
+Associations can also be exported.
+
+```ruby
+# in app/csvs/book_csv.rb
+class BookCsv < SpeakyCsv::Base
+  define_csv_fields do |config|
+    config.field :id, :author
+
+    config.belongs_to :publisher do |p|
+      p.field :id, :name
+    end
+
+    config.has_many :reviews do |r|
+      r.field :id, :tomatoes, :publication
+    end
+  end
+end
+```
+
+This defines a CSV format that looks like this:
+
+    id,author,publisher_id,publisher_name
+    3,Stevenson,22,Blam Ltd
+    19,Melville,,
+    1,Macaulay,83,NY Tiempo,reviews_0_id,8,reviews_0_tomatoes,50,review_0_publication,Daily
+
+Since a book only ever has one publisher, these can get dedicated columns
+with headers. Reviews are more tricky because there can be several that
+need to be serialized to a single csv row. Speaky CSV uses a convention
+similar to how rails and rack deal with query parameters for things like
+multi select form inputs.
+
 ## Importing
 
 Now lets import some books. Speaky will expect an import to have
@@ -67,7 +126,7 @@ id,author
 CSV
 ```
 
-Notice the empty id column. This tells speaky csv that the operation is
+Notice the empty id column. This tells Speaky that the operation is
 a create. The file can be imported like this:
 
 ```ruby
@@ -93,7 +152,7 @@ CSV
 ```
 
 Now there is an id value in the csv. Having an id value will cause
-speaky csv to find the record with the given id and update it.
+Speaky to find the record with the given id and update it.
 
 ```ruby
 importer = BookCsv.active_record_importer csv_io, Book
@@ -147,31 +206,6 @@ if book.marked_for_destruction?
   book.destroy
 end
 ```
-
-## Exporting
-
-Creating a csv file from records in a database can be done with the
-exporter:
-
-```ruby
-books = [
-  Book.create!(author: 'Stevenson'),
-  Book.create!(author: 'Melville'),
-  Book.create!(author: 'Macaulay'),
-]
-
-exporter = BookCsv.exporter books
-
-io = StringIO.new
-exporter.each { |row| io.write row }
-```
-
-`io` will have the following contents:
-
-    id,author,_destroy
-    2,Stevenson,false
-    3,Melville,false
-    4,Macaulay,false
 
 ## Log Messages
 
