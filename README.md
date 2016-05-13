@@ -239,8 +239,11 @@ And the csv file being imported is this:
     id,author,publisher_id,publisher_name
     3,Stevenson,22,Blam Ltd
 
-Then speaky will find a Booking record with id `3` and call
-`booking.publisher_attributes = {id: '22', name: 'Blam Ltd'}`.
+Then speaky will find a Booking record with id `3` and call:
+
+```ruby
+booking.publisher_attributes = {id: '22', name: 'Blam Ltd'}
+```
 
 For a has\_many association, if the configuration looked like this:
 
@@ -262,8 +265,11 @@ And an import csv looked like this:
     id,author,publisher_id,publisher_name
     1,Macaulay,83,NY Tiempo,reviews_0_id,8,reviews_0_tomatoes,50,review_0_publication,Daily
 
-The speaky will find a Booking record with id `1` and call
-`booking.reviews_attributes = [{id: '8', tomatoes: '50', publication: 'Daily'}]`.
+The speaky will find a Booking record with id `1` and call:
+
+```ruby
+booking.reviews_attributes = [{id: '8', tomatoes: '50', publication: 'Daily'}]
+```
 
 ## Log Messages
 
