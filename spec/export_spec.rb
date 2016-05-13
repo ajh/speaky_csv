@@ -235,4 +235,84 @@ True story,Honest Abe,50,Daily
     end
   end
 
+  context 'with export_only has_one field' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field 'id'
+          d.has_one 'publisher' do |r|
+            r.field :id
+            r.field :name, export_only: true
+          end
+        end
+      end
+    end
+
+    let(:records) do
+      [
+        double('book1',
+               id: 22,
+               publisher: double(id: 99, name: 'Post')),
+      ]
+    end
+
+    it 'should write field' do
+      expect(output).to eq <<-CSV
+id,publisher_id,publisher_name
+22,99,Post
+      CSV
+    end
+  end
+
+  context 'with unknown has_many field' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field 'id'
+          d.has_one 'publisher' do |r|
+            r.field :unknown
+          end
+        end
+      end
+    end
+
+    let(:records) do
+      [
+        double('book1',
+               id: 22,
+               publisher: double(id: 99, name: 'Post')),
+      ]
+    end
+
+    it 'adds an error' do
+      subject.to_a
+      expect(subject.log).to match(/publisher_unknown is not a method/)
+    end
+  end
+
+  context 'with unknown has_many association' do
+    before do
+      presenter_klass.class_eval do
+        define_csv_fields do |d|
+          d.field 'id'
+          d.has_one 'unknown' do |r|
+            r.field :name
+          end
+        end
+      end
+    end
+
+    let(:records) do
+      [
+        double('book1',
+               id: 22,
+               publisher: double(id: 99, name: 'Post')),
+      ]
+    end
+
+    it 'adds an error' do
+      subject.to_a
+      expect(subject.log).to match(/unknown is not a method/)
+    end
+  end
 end
