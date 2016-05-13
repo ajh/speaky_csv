@@ -7,6 +7,8 @@ Speaky CSV features:
 * An easy to use API,
 * Speedy stream processing using enumerators.
 
+![Build Status](https://travis-ci.org/ajh/speaky_csv.svg?branch=master)
+
 ## Installation
 
 Add this line to your application's Gemfile:
