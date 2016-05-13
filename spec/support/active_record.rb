@@ -30,6 +30,7 @@ class Book < ActiveRecord::Base
   has_many :reviews, inverse_of: :book
   belongs_to :publisher, inverse_of: :books
   accepts_nested_attributes_for :reviews, allow_destroy: true
+  accepts_nested_attributes_for :publisher, allow_destroy: true
 end
 
 class Review < ActiveRecord::Base

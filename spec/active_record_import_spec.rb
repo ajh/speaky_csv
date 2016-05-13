@@ -272,15 +272,13 @@ id
     context 'and csv has new associated record' do
       let(:io) do
         StringIO.new <<-CSV
-id
-1,publisher_name,Dan Blam
+id,publisher_id,publisher_name
+1,,Dan Blam
         CSV
       end
 
-      xit 'builds new record' do
-        expect(record.publisher.attributes).to include('book_id' => 1,
-                                                    'tomatoes' => 99,
-                                                    'publication' => 'Post')
+      it 'builds new record' do
+        expect(record.publisher.attributes).to include('id' => nil, 'name' => 'Dan Blam')
         expect(record.publisher).to be_new_record
       end
     end

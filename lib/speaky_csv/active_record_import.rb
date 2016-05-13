@@ -89,21 +89,14 @@ module SpeakyCsv
               end
             end
 
-            @config.has_manys.keys.each do |name|
-              if attrs.key?(name.to_s)
-                # assume nested attributes feature is used
-                attrs["#{name}_attributes"] = attrs.delete name.to_s
-              end
+            @config.has_manys.keys.map(&:to_s).select{|n| attrs.key? n}.each do |name|
+              # assume nested attributes feature is used
+              attrs["#{name}_attributes"] = attrs.delete name
             end
 
-            @config.has_ones.keys.each do |name|
-              if attrs.key?(name.to_s)
-                # assume nested attributes feature is used
-                attrs["#{name}_attributes"] = attrs.delete name.to_s
-              end
+            @config.has_ones.keys.map(&:to_s).select{|n| attrs.key? n}.each do |name|
+              attrs["#{name}_attributes"] = attrs.delete name.to_s
             end
-
-            #warn attrs.inspect
 
             attrs.each do |attr, value|
               writer_method = "#{attr}="
