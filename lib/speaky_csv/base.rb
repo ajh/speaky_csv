@@ -9,7 +9,8 @@ module SpeakyCsv
       :has_ones,
       :primary_key
 
-    def initialize
+    def initialize(root: true)
+      @root = root
       @export_only_fields = []
       @fields = []
       @has_manys = {}
@@ -52,7 +53,8 @@ module SpeakyCsv
     #   end
     #
     def has_one(name)
-      @has_ones[name.to_sym] ||= self.class.new
+      @root or raise NotImplementedError, "nested associations are not supported"
+      @has_ones[name.to_sym] ||= self.class.new root: false
       yield @has_ones[name.to_sym]
 
       nil
@@ -71,7 +73,8 @@ module SpeakyCsv
     #   end
     #
     def has_many(name)
-      @has_manys[name.to_sym] ||= self.class.new
+      @root or raise NotImplementedError, "nested associations are not supported"
+      @has_manys[name.to_sym] ||= self.class.new root: false
       yield @has_manys[name.to_sym]
 
       nil

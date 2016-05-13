@@ -52,5 +52,19 @@ describe SpeakyCsv::Base do
         end
       end
     end
+
+    it 'raises if association nesting is attempted' do
+      expect do
+        parent_klass.class_eval do
+          define_csv_fields do |d|
+            d.has_one :foo do |f|
+              f.has_many :bars do |b|
+                b.field 'name'
+              end
+            end
+          end
+        end
+      end.to raise_error(NotImplementedError)
+    end
   end
 end
