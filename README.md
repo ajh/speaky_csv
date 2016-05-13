@@ -286,9 +286,9 @@ See `Logger` in the ruby stdlib for more details.
 * For associations, use `nested_attributes_for` and add `id` and
   `_destroy` fields
 * Use optimistic locking and configure a `lock_version` field
-* Consider building a draft or preview feature for importing, which
-  doesn't persist the record changes by calling `save`, but reports and
-  the changes that would be persisted using `ActiveModel::Dirty`
+* Consider building a draft or preview feature for importing which
+  doesn't persist the record by calling `save` but instead reports what
+  the changes would be using `ActiveModel::Dirty`
 
 ## TODO
 
