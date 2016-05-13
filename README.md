@@ -58,6 +58,13 @@ Creating a csv file from records in a database can be done with the
 exporter:
 
 ```ruby
+# in app/csvs/book_csv.rb
+class BookCsv < SpeakyCsv::Base
+  define_csv_fields do |config|
+    config.field :id, :author, :_destroy
+  end
+end
+
 books = [
   Book.create!(author: 'Stevenson'),
   Book.create!(author: 'Melville'),
