@@ -196,12 +196,12 @@ See `Logger` in the ruby stdlib for more details.
 * [x] export validations
 * [x] attr import validations
 * [x] active record import validations
-* [ ] `has_one` associations
+* [x] `has_one` associations
 * [ ] required fields (make `lock_version` required for example)
 * [ ] transformations for values via accessors on class
 * [ ] public stable api for csv format definition
-* [ ] assign attrs one at a time so they don't all fail together
-* [ ] decide what empty cells mean
+* [x] assign attrs one at a time so they don't all fail together
+* [x] decide what empty cells mean
 
 ## Contributing
 
