@@ -112,11 +112,12 @@ This defines a CSV format that looks like this:
     19,Melville,,
     1,Macaulay,83,NY Tiempo,reviews_0_id,8,reviews_0_tomatoes,50,review_0_publication,Daily
 
-Since a book only ever has one publisher, these can get dedicated columns
-with headers. Reviews are more tricky because there can be several that
-need to be serialized to a single csv row. Speaky CSV uses a convention
-similar to how rails and rack deal with query parameters for things like
-multi select form inputs.
+Since a book only ever has one publisher, these can get dedicated
+columns with headers (the `publisher_id` and `publisher_name` columns).
+Reviews are more tricky because there can be several that need to be
+serialized to a single csv row. Speaky CSV uses a convention similar to
+how rails and rack deal with query parameters for things like multi
+select form inputs.
 
 ## Importing
 
