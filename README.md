@@ -77,7 +77,7 @@ exporter.each { |row| io.write row }
     3,Melville,false
     4,Macaulay,false
 
-### Exporting with associations
+#### With Associations
 
 Associations can also be exported.
 
@@ -207,6 +207,57 @@ if book.marked_for_destruction?
 end
 ```
 
+#### With Associations
+
+Speaky uses the active record `accepts_nested_attributes_for` feature to
+deal with importing association data.
+
+For example, if a belongs\_to association is configured:
+
+```ruby
+# in app/csvs/book_csv.rb
+class BookCsv < SpeakyCsv::Base
+  define_csv_fields do |config|
+    config.field :id, :author
+
+    config.belongs_to :publisher do |p|
+      p.field :id, :name
+    end
+  end
+end
+```
+
+And the csv file being imported is this:
+
+    id,author,publisher_id,publisher_name
+    3,Stevenson,22,Blam Ltd
+
+Then speaky will find a Booking record with id `3` and call
+`publisher_attributes = {id: '22', name: 'Blam Ltd'}`.
+
+For a has\_many association, if the configuration looked like this:
+
+```ruby
+# in app/csvs/book_csv.rb
+class BookCsv < SpeakyCsv::Base
+  define_csv_fields do |config|
+    config.field :id, :author
+
+    config.has_many :reviews do |r|
+      r.field :id, :tomatoes, :publication
+    end
+  end
+end
+```
+
+And an import csv looked like this:
+
+    id,author,publisher_id,publisher_name
+    1,Macaulay,83,NY Tiempo,reviews_0_id,8,reviews_0_tomatoes,50,review_0_publication,Daily
+
+The speaky will find a Booking record with id `3` and call
+`reviews_attributes = [{id: '50', publication: 'Daily'}]`.
+
 ## Log Messages
 
 Importers and exporters use a `Logger` instance to write messages during
@@ -218,10 +269,13 @@ See `Logger` in the ruby stdlib for more details.
 
 ## Best Practices
 
-* Add `id` and `_destroy` fields for active record models
+* Configure speaky with `id` and `_destroy` fields for active record models
 * For associations, use `nested_attributes_for` and add `id` and
   `_destroy` fields
-* Use optimistic locking and add `lock_version` to csv
+* Use optimistic locking and configure a `lock_version` field
+* Consider building a draft or preview feature for importing, which
+  doesn't persist the record changes by calling `save`, but reports and
+  the changes that would be persisted using `ActiveModel::Dirty`
 
 ## TODO
 
