@@ -84,7 +84,7 @@ exporter.each { |row| io.write row }
     3,Melville,false
     4,Macaulay,false
 
-#### With Associations
+##### With Associations
 
 Associations can also be exported.
 
@@ -191,8 +191,7 @@ To destroy the record, we'll need to change the csv format to add a
 `_destroy` field. If this column contains a true value like: 'true' or
 '1', the record will be marked for destruction.
 
-Marking an active record for destruction is a little known active record
-feature documented here:
+Marking an active record for destruction is documented here:
 http://api.rubyonrails.org/v4.2.0/classes/ActiveRecord/AutosaveAssociation.html#method-i-marked_for_destruction-3F
 
 ```ruby
@@ -215,7 +214,7 @@ if book.marked_for_destruction?
 end
 ```
 
-#### With Associations
+##### With Associations
 
 Speaky uses the active record `accepts_nested_attributes_for` feature to
 deal with importing association data.
