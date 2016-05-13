@@ -303,6 +303,7 @@ See `Logger` in the ruby stdlib for more details.
 * [x] public stable api for csv format definition
 * [x] assign attrs one at a time so they don't all fail together
 * [x] decide what empty cells mean
+* [ ] figure out why SpeakyCsv is a class and not a module
 
 ## Contributing
 
