@@ -1,107 +1,17 @@
 module SpeakyCsv
-  # An instance of this class is yielded to the block passed to
-  # define_csv_fields. Used to configure speaky csv.
-  class Builder
-    attr_reader \
-      :export_only_fields,
-      :fields,
-      :has_manys,
-      :has_ones,
-      :primary_key
-
-    def initialize(root: true)
-      @root = root
-      @export_only_fields = []
-      @fields = []
-      @has_manys = {}
-      @has_ones = {}
-      @primary_key = :id
-    end
-
-    # Add one or many fields to the csv format.
-    #
-    # If options are passed, they apply to all given fields.
-    def field(*fields, export_only: false)
-      @fields += fields.map(&:to_sym)
-      @fields.uniq!
-
-      if export_only
-        @export_only_fields += fields.map(&:to_sym)
-        @export_only_fields.uniq!
-      end
-
-      nil
-    end
-
-    # Define a custom primary key. By default an `id` column as used.
-    #
-    # Accepts the same options as #field
-    def primary_key=(name, options = {})
-      field name, options
-      @primary_key = name.to_sym
-    end
-
-    # Define a one to one association. This is also aliased as `belongs_to`. Expects a name and a block to
-    # define the fields on associated record.
-    #
-    # For example:
-    #
-    #   define_csv_fields do |c|
-    #     has_many 'publisher' do |p|
-    #       p.field :id, :name, :_destroy
-    #     end
-    #   end
-    #
-    def has_one(name)
-      @root or raise NotImplementedError, "nested associations are not supported"
-      @has_ones[name.to_sym] ||= self.class.new root: false
-      yield @has_ones[name.to_sym]
-
-      nil
-    end
-    alias :belongs_to :has_one
-
-    # Define a one to many association. Expect a name and a block to
-    # define the fields on associated records.
-    #
-    # For example:
-    #
-    #   define_csv_fields do |c|
-    #     has_many 'reviews' do |r|
-    #       r.field :id, :name, :_destroy
-    #     end
-    #   end
-    #
-    def has_many(name)
-      @root or raise NotImplementedError, "nested associations are not supported"
-      @has_manys[name.to_sym] ||= self.class.new root: false
-      yield @has_manys[name.to_sym]
-
-      nil
-    end
-
-    def dup
-      other = super
-      other.instance_variable_set '@has_manys', @has_manys.deep_dup
-      other.instance_variable_set '@has_ones', @has_ones.deep_dup
-
-      other
-    end
-  end
-
   # Inherit from this class when using SpeakyCsv
   class Base
-    class_attribute :csv_field_builder
-    self.csv_field_builder = Builder.new
+    class_attribute :speaky_csv_config
+    self.speaky_csv_config = Config.new
 
     def self.define_csv_fields
-      self.csv_field_builder = csv_field_builder.deep_dup
-      yield csv_field_builder
+      self.speaky_csv_config = speaky_csv_config.deep_dup
+      yield ConfigBuilder.new(config: speaky_csv_config)
     end
 
     # Return a new exporter instance
     def self.exporter(records_enumerator)
-      Export.new csv_field_builder,
+      Export.new speaky_csv_config,
                  records_enumerator
     end
 
@@ -125,7 +35,7 @@ module SpeakyCsv
     # end
     #
     def self.attr_importer(input_io)
-      AttrImport.new csv_field_builder,
+      AttrImport.new speaky_csv_config,
                      input_io
     end
 
@@ -153,7 +63,7 @@ module SpeakyCsv
     # for transforming or chaining Enumerables.
     def self.active_record_importer(input_io_or_enumerable, klass)
       ActiveRecordImport.new \
-        csv_field_builder,
+        speaky_csv_config,
         input_io_or_enumerable,
         klass
     end

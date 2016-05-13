@@ -300,7 +300,7 @@ See `Logger` in the ruby stdlib for more details.
 * [x] `has_one` associations
 * [ ] required fields (make `lock_version` required for example)
 * [ ] transformations for values via accessors on class
-* [ ] public stable api for csv format definition
+* [x] public stable api for csv format definition
 * [x] assign attrs one at a time so they don't all fail together
 * [x] decide what empty cells mean
 
