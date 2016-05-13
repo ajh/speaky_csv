@@ -29,6 +29,40 @@ True story,Honest Abe
         { 'name' => 'True story', 'author' => 'Honest Abe' }
       ])
     end
+
+    context "when csv cell is empty" do
+      let(:io) do
+        StringIO.new <<-CSV
+name,author
+,Sneed
+True story,
+        CSV
+      end
+
+      it 'should return nil values' do
+        expect(subject.to_a).to eq([
+          { 'name' => nil, 'author' => 'Sneed' },
+          { 'name' => 'True story', 'author' => nil }
+        ])
+      end
+    end
+
+    context "when a column isn't present" do
+      let(:io) do
+        StringIO.new <<-CSV
+name
+Big Fiction
+True story
+        CSV
+      end
+
+      it 'should not include that field in output' do
+        expect(subject.to_a).to eq([
+          { 'name' => 'Big Fiction' },
+          { 'name' => 'True story' }
+        ])
+      end
+    end
   end
 
   context 'with export_only field' do
@@ -58,7 +92,7 @@ id,name
     end
   end
 
-  context 'with unknown field' do
+  context 'with unknown columns' do
     before do
       presenter_klass.class_eval do
         define_csv_fields do |d|
@@ -127,6 +161,36 @@ True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
         }
       ])
     end
+
+    context 'when csv cell is empty' do
+      let(:io) do
+        StringIO.new <<-CSV
+name,author,,,,,,,,
+Big Fiction,Sneed,review_0_tomatoes,,review_0_publication,,review_1_tomatoes,,review_1_publication
+True story,Honest Abe,review_0_tomatoes,,review_0_publication,,
+        CSV
+      end
+
+      it 'should return nil values' do
+        expect(subject.to_a).to eq([
+          {
+            'name' => 'Big Fiction',
+            'author' => 'Sneed',
+            'reviews' => [
+              { 'tomatoes' => nil, 'publication' => nil },
+              { 'tomatoes' => nil, 'publication' => nil }
+            ]
+          },
+          {
+            'name' => 'True story',
+            'author' => 'Honest Abe',
+            'reviews' => [
+              { 'tomatoes' => nil, 'publication' => nil }
+            ]
+          }
+        ])
+      end
+    end
   end
 
   context 'with has_one fields' do
@@ -144,7 +208,7 @@ True story,Honest Abe,review_0_tomatoes,50,review_0_publication,Daily
     let(:io) do
       StringIO.new <<-CSV
 name,author,publisher_id,publisher_name,
-Big Fiction,Sneed,,Dan Blam
+Big Fiction,Sneed,3,Dan Blam
 True story,Honest Abe,50,Burt Bacharach
       CSV
     end
@@ -155,7 +219,7 @@ True story,Honest Abe,50,Burt Bacharach
           'name' => 'Big Fiction',
           'author' => 'Sneed',
           'publisher' => {
-            'name' => 'Dan Blam'
+            'id' => '3', 'name' => 'Dan Blam'
           },
         },
         {
@@ -166,6 +230,60 @@ True story,Honest Abe,50,Burt Bacharach
           }
         }
       ])
+    end
+
+    context 'when csv cell is empty' do
+      let(:io) do
+        StringIO.new <<-CSV
+name,author,publisher_id,publisher_name,
+Big Fiction,Sneed,,Dan Blam
+True story,Honest Abe,50,
+        CSV
+      end
+
+      it 'should return nil values' do
+        expect(subject.to_a).to eq([
+          {
+            'name' => 'Big Fiction',
+            'author' => 'Sneed',
+            'publisher' => {
+              'id' => nil, 'name' => 'Dan Blam'
+            },
+          },
+          {
+            'name' => 'True story',
+            'author' => 'Honest Abe',
+            'publisher' => {
+              'id' => '50', 'name' => nil
+            }
+          }
+        ])
+      end
+    end
+
+    context "when a column isn't present" do
+      let(:io) do
+        StringIO.new <<-CSV
+name,author,publisher_id
+Big Fiction,Sneed,3
+True story,Honest Abe,50
+        CSV
+      end
+
+      it 'should not include that field in output' do
+        expect(subject.to_a).to eq([
+          {
+            'name' => 'Big Fiction',
+            'author' => 'Sneed',
+            'publisher' => { 'id' => '3' },
+          },
+          {
+            'name' => 'True story',
+            'author' => 'Honest Abe',
+            'publisher' => { 'id' => '50' }
+          }
+        ])
+      end
     end
   end
 

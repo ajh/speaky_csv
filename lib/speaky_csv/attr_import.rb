@@ -66,11 +66,8 @@ module SpeakyCsv
     def add_fields(row, attrs)
       fields = (@config.fields - @config.export_only_fields).map(&:to_s)
       fields.each do |name|
-        value = row.field name
-        # This makes it hard to purposefully set values to blank via an empty
-        # cell in the csv
-        value.present? or next
-        attrs[name] = value
+        row.has_key? name or next
+        attrs[name] = row.field name
       end
     end
 
@@ -106,11 +103,9 @@ module SpeakyCsv
       @config.has_ones.each do |name,assoc_config|
         fields = (assoc_config.fields - assoc_config.export_only_fields).map(&:to_s)
         fields.each do |f|
-          value = row.field "#{name}_#{f}"
-          # This makes it hard to purposefully set values to blank via an empty
-          # cell in the csv
-          value.present? or next
-          (attrs[name.to_s] ||= {})[f] = value
+          csv_name = "#{name}_#{f}"
+          row.has_key? csv_name or next
+          (attrs[name.to_s] ||= {})[f] = row.field "#{name}_#{f}"
         end
       end
     end
